@@ -21,7 +21,7 @@ def create_corpus(slack_token,user):
             A value between 0 and 1 signfying humor quotient
 """
     sc = SlackClient(slack_token)
-    users={nick:"U1LN41FML", shankar:"U1LNMF50A", brad:"U1LM5NTU3", streger:"U1LNTHZ3R"}
+    users={"nick":"U1LN41FML", "shankar":"U1LNMF50A", "brad":"U1LM5NTU3", "streger":"U1LNTHZ3R"}
     l =sc.api_call(
         "channels.history",
         channel ="C1LNMF6JW",
@@ -31,7 +31,7 @@ def create_corpus(slack_token,user):
     for i in range(len(l['messages'])):
         if 'user'in l['messages'][i]:
             if l['messages'][i]['user'] == users[user]:
-                nick_corpus.append(l['messages'][i]['text'])
+                _corpus.append(l['messages'][i]['text'])
     return _corpus
 
 
@@ -88,11 +88,16 @@ def handle_command(command, channel):
         are valid commands. If so, then acts on the commands. If not,
         returns back what it needs for clarification.
     """
-    peeps = []
-    response = "Not sure what you mean. Use the *" + nick_translation + ", "+brad_translation+", "+streger_translation+", "+shankar_translation\
+    peeps = {"translate nick":"nick", "translate brad":"brad", "translate streger":"streger", "translate shankar":"shankar"}
+    
+    response = "Not sure what you mean. Use the *" + nick_translation + ", "+brad_translation+", "+streger_translation+", "+shankar_translation+\
                "* command with numbers, delimited by spaces."
-    if command.startswith(EXAMPLE_COMMAND):
-        response = judge_statement(create_corpus(slack_token,nick_translation.split()[1]))
+
+    if command in peeps:
+        response = judge_statement(create_corpus(slack_token,peeps[command]))
+    else:
+        slack_client.api_call("chat.postMessage", channel=channel,
+                      text=response, as_user=True)
 
 
 
