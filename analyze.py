@@ -13,7 +13,7 @@ def word_feats(words):
     return dict([(word, True) for word in words])
  
 
-def create_corpus(slack_token):
+def create_corpus(slack_token,user):
     """ retrieve messages shared by nick in order to create corpus
         Args:
             slack_token: token used to communicate with API
@@ -21,18 +21,18 @@ def create_corpus(slack_token):
             A value between 0 and 1 signfying humor quotient
 """
     sc = SlackClient(slack_token)
-
+    users={nick:"U1LN41FML", shankar:"U1LNMF50A", brad:"U1LM5NTU3", streger:"U1LNTHZ3R"}
     l =sc.api_call(
         "channels.history",
         channel ="C1LNMF6JW",
         latest=time.time())
 
-    nick_corpus = []
+    _corpus = []
     for i in range(len(l['messages'])):
         if 'user'in l['messages'][i]:
-            if l['messages'][i]['user'] == 'U1LN41FML':
+            if l['messages'][i]['user'] == users[user]:
                 nick_corpus.append(l['messages'][i]['text'])
-    return nick_corpus
+    return _corpus
 
 
 def judge_statement(statements):
@@ -57,17 +57,30 @@ def judge_statement(statements):
     	else:
     		pos+=1
 
-    chance = float(pos)/float(neg) 		
-    return chance
+    response = float(pos)/float(neg) 		
+    if response<0.5:
+        percent = 100-response*100
+        slack_client.api_call("chat.postMessage", channel=channel,
+                      text=str(percent)+"% joke", as_user=True)
+
+    else:
+        percent = response*100-50
+        slack_client.api_call("chat.postMessage", channel=channel,
+                      text=str(percent)+"% not a joke", as_user=True)
 
 
 # starterbot's ID as an environment variable
 BOT_ID = "U4ULT8A3G"
 # constants
 AT_BOT = "<@" + BOT_ID + ">"
-EXAMPLE_COMMAND = "translate nick"
+nick_translation = "translate nick"
+brad_translation = "translate brad"
+streger_translation = "translate streger"
+shankar_translation = "translate shankar"
 
 slack_client = SlackClient(slack_token)
+
+
 
 def handle_command(command, channel):
     """
@@ -75,19 +88,12 @@ def handle_command(command, channel):
         are valid commands. If so, then acts on the commands. If not,
         returns back what it needs for clarification.
     """
-    chance = "Not sure what you mean. Use the *" + EXAMPLE_COMMAND + \
+    peeps = []
+    response = "Not sure what you mean. Use the *" + nick_translation + ", "+brad_translation+", "+streger_translation+", "+shankar_translation\
                "* command with numbers, delimited by spaces."
     if command.startswith(EXAMPLE_COMMAND):
-        chance = judge_statement(create_corpus(slack_token))
-    if chance<0.5:
-    	percent = chance*100
+        response = judge_statement(create_corpus(slack_token,nick_translation.split()[1]))
 
-    	slack_client.api_call("chat.postMessage", channel=channel,
-                          text=str(percent)+"% joke", as_user=True)
-    else:
-    	percent = chance*100
-    	slack_client.api_call("chat.postMessage", channel=channel,
-                          text=str(percent)+" not a joke", as_user=True)
 
 
 def parse_slack_output(slack_rtm_output):
