@@ -3,7 +3,7 @@ from slackclient import SlackClient
 
 
 BOT_NAME = 'translator'
-slack_token = "xoxp-54759295125-54769515010-163829435204-f3df9fef04159dae5d24a274a187432d"
+slack_token = ""
 slack_client = SlackClient(slack_token)
 
 
